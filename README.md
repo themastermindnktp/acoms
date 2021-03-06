@@ -25,6 +25,7 @@ Arguments:
     -max-pher   [maximum pheromone]                             1.0
     -ant        [number of ants]                                20
     -gen        [number of generations]                         100
+    -offset     [threshold of distribution to pick offsets]     0.05
 
 Options:
     -dna: Using DNA Alphabet

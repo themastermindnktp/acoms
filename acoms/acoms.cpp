@@ -60,7 +60,6 @@ struct Acoms : Smmas {
                     occurrences[problem.encode(sequence[path[i] + k])][k]++;
             }
         }
-
     }
 
     pair<double, vector<int>> find_path() override {
