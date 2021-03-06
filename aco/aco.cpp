@@ -24,9 +24,7 @@ struct Aco {
 
     virtual void update_pheromones(const vector<int>& path) {}
 
-    virtual pair<double, vector<int>> improve_result(const double &score, const vector<int> &path) {
-        return make_pair(score, path);
-    }
+    virtual void improve_result(double &score, vector<int> &path) {}
 
     virtual pair<double, vector<int>> find_path() {}
 
@@ -47,7 +45,8 @@ struct Aco {
             }
         }
 
-        return improve_result(score, path);
+        improve_result(score, path);
+        return make_pair(score, path);
     }
 
     virtual pair<double, vector<int>> find_best_path(const int &n_ants, const int &n_generations) {

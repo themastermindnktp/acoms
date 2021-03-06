@@ -20,12 +20,51 @@ struct Acoms : Smmas {
           Smmas(problem.sequence_lengths(), rho, alpha, beta, min_pheromone, max_pheromone) {
     }
 
-    pair<double, vector<int>> find_path() override {
+    void improve_result(double &score, vector<int> &path) override {
         vector<vector<int>> occurrences(problem.alp_size, vector<int>(problem.w));
 
-        for (int i = 0; i < problem.alp_size; ++i)
-            for (int j = 0; j < problem.w; ++j)
-                occurrences[i][j] = 0;
+        for (int i = 0; i < problem.n; ++i)
+            for (int k = 0; k < problem.w; ++k)
+                occurrences[problem.encode(problem.sequences[i][path[i] + k])][k]++;
+
+        bool improved = true;
+        while (improved) {
+            improved = false;
+            for (int i = 0; i < problem.n; ++i) {
+                string &sequence = problem.sequences[i];
+
+                for (int k = 0; k < problem.w; ++k)
+                    occurrences[problem.encode(sequence[path[i] + k])][k]--;
+
+                for (int j = 0; j <= sequence.length() - problem.w; ++j) {
+                    for (int k = 0; k < problem.w; ++k)
+                        occurrences[problem.encode(sequence[j + k])][k]++;
+
+                    double candidate_score = Function::information_content(problem.n,
+                                                                           problem.alp_size,
+                                                                           problem.w,
+                                                                           occurrences,
+                                                                           problem.background);
+
+                    if (candidate_score > score) {
+                        improved = true;
+                        score = candidate_score;
+                        path[i] = j;
+                    }
+
+                    for (int k = 0; k < problem.w; ++k)
+                        occurrences[problem.encode(sequence[j + k])][k]--;
+                }
+
+                for (int k = 0; k < problem.w; ++k)
+                    occurrences[problem.encode(sequence[path[i] + k])][k]++;
+            }
+        }
+
+    }
+
+    pair<double, vector<int>> find_path() override {
+        vector<vector<int>> occurrences(problem.alp_size, vector<int>(problem.w, 0));
 
         vector<int> path;
 
