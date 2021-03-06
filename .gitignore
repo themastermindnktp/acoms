@@ -1,0 +1,7 @@
+*
+!/**/
+!*.*
+/data
+/cmake-build-debug
+/result
+/.idea
