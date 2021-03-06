@@ -30,11 +30,12 @@ struct Acoms : Smmas {
         vector<int> path;
 
         vector<double> options;
-        double total_value = 0.0;
 
         for (int i = 0; i < problem.n; ++i) {
             string &sequence = problem.sequences[i];
             options.clear();
+
+            double total_value = 0.0;
 
             for (int j = 0; j <= sequence.length() - problem.w; ++j) { // motif starts from j
                 for (int k = 0; k < problem.w; ++k) // position k in the motif is position j+k in the sequence
@@ -72,6 +73,7 @@ struct Acoms : Smmas {
                                                      problem.w,
                                                      occurrences,
                                                      problem.background);
+
         return make_pair(score, path);
     }
 };

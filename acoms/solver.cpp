@@ -6,8 +6,8 @@
 #include "../standard.cpp"
 
 namespace Solver {
-    const int DEFAULT_N_ANTS = 8;
-    const int DEFAULT_N_GENERATIONS = 20;
+    const int DEFAULT_N_ANTS = 20;
+    const int DEFAULT_N_GENERATIONS = 100;
 
     string output_filename;
 
@@ -101,7 +101,7 @@ namespace Solver {
     void solve() {
         cout << "Running ACOMS:" << endl;
 
-        pair<int, vector<int>> result = acoms->find_best_path(n_ants, n_generations);
+        pair<double, vector<int>> result = acoms->find_best_path(n_ants, n_generations);
         cout << "Information content: " << result.first << endl;
 
         vector<vector<int>> offsets;

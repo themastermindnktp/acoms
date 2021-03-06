@@ -23,6 +23,8 @@ Arguments:
     -beta       [exponential parameter of trail desirability]   1.0
     -min-pher   [minimum pheromone]                             0.1
     -max-pher   [maximum pheromone]                             1.0
+    -ant        [number of ants]                                20
+    -gen        [number of generations]                         100
 
 Options:
     -dna: Using DNA Alphabet

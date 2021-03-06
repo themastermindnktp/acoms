@@ -24,7 +24,7 @@ struct Aco {
 
     virtual void update_pheromones(const vector<int>& path) {}
 
-    virtual pair<double, vector<int>> improve_result(const int &score, const vector<int> &path) {
+    virtual pair<double, vector<int>> improve_result(const double &score, const vector<int> &path) {
         return make_pair(score, path);
     }
 
@@ -39,7 +39,6 @@ struct Aco {
 
         for (int i = 1; i < n_ants; ++i) {
             cout << ".";
-            update_pheromones(candidate.second);
             candidate = find_path();
 
             if (candidate.first > score) {
@@ -52,6 +51,7 @@ struct Aco {
     }
 
     virtual pair<double, vector<int>> find_best_path(const int &n_ants, const int &n_generations) {
+        reset();
         cout << "> Generation 1";
         pair<double, vector<int>> candidate = find_best_path(n_ants);
         cout << endl;
@@ -60,7 +60,6 @@ struct Aco {
         vector<int> path = candidate.second;
 
         for(int i = 1; i < n_generations; ++i) {
-            reset();
             cout << "> Generation " << i + 1;
             candidate = find_best_path(n_ants);
             cout << endl;
@@ -69,6 +68,8 @@ struct Aco {
                 score = candidate.first;
                 path = candidate.second;
             }
+
+            update_pheromones(candidate.second);
         }
 
         return make_pair(score, path);
