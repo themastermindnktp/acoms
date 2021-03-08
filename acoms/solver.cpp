@@ -77,6 +77,7 @@ namespace Solver {
         cout << "Beta              \t" << beta << endl;
         cout << "Min Pheromone     \t" << min_pheromone << endl;
         cout << "Max Pheromone     \t" << max_pheromone << endl;
+        cout << "Offset Threshold  \t" << offset_threshold << endl;
         cout << endl;
 
         cout << "Number of ants: " << n_ants << endl;
@@ -104,7 +105,7 @@ namespace Solver {
         }
     }
 
-    vector<vector<int>> get_offsets(vector<int> &path) {
+    vector<vector<int>> get_offsets_by_distribution_per_sequence(vector<int> &path) {
         vector<vector<int>> occurrences(problem->alp_size, vector<int>(problem->w));
 
         for (int i = 0; i < problem->n; ++i)
@@ -113,7 +114,7 @@ namespace Solver {
 
         vector<vector<int>> offsets(problem->n, vector<int>());
 
-        double threshold = Function::standard_normal_quantile(1.0 - offset_threshold);
+        double quantile = Function::standard_normal_quantile(1.0 - offset_threshold);
 
         for (int i = 0; i < problem->n; ++i) {
             string &sequence = problem->sequences[i];
@@ -151,7 +152,7 @@ namespace Solver {
             if (variance == 0.0) for (int j = 0; j < m; ++j) offsets[i].emplace_back(j);
             else {
                 for (int j = 0; j < m; ++j)
-                    if ((scores[j] - mean) / sqrt(variance) > threshold) offsets[i].emplace_back(j);
+                    if ((scores[j] - mean) / sqrt(variance) > quantile) offsets[i].emplace_back(j);
             }
 
             for (int k = 0; k < problem->w; ++k)
@@ -161,13 +162,135 @@ namespace Solver {
         return offsets;
     }
 
+    vector<vector<int>> get_offsets_by_global_distribution(vector<int> &path) {
+        vector<vector<int>> occurrences(problem->alp_size, vector<int>(problem->w));
+
+        for (int i = 0; i < problem->n; ++i)
+            for (int k = 0; k < problem->w; ++k)
+                occurrences[problem->encode(problem->sequences[i][path[i] + k])][k]++;
+
+        vector<vector<int>> offsets(problem->n, vector<int>());
+
+        double quantile = Function::standard_normal_quantile(1.0 - offset_threshold);
+
+        vector<pair<pair<int, int>, double>> candidate_offsets;
+        double total = 0.0;
+        int counter = 0;
+
+        for (int i = 0; i < problem->n; ++i) {
+            string &sequence = problem->sequences[i];
+
+            int m = sequence.length() - problem->w + 1;
+            counter += m;
+
+            for (int k = 0; k < problem->w; ++k)
+                occurrences[problem->encode(sequence[path[i] + k])][k]--;
+
+            for (int j = 0; j < m; ++j) {
+                for (int k = 0; k < problem->w; ++k)
+                    occurrences[problem->encode(sequence[j + k])][k]++;
+
+                double score = Function::information_content(problem->n,
+                                                             problem->alp_size,
+                                                             problem->w,
+                                                             occurrences,
+                                                             problem->background);
+
+                total += score;
+                candidate_offsets.emplace_back(make_pair(make_pair(i, j), score));
+
+                for (int k = 0; k < problem->w; ++k)
+                    occurrences[problem->encode(sequence[j + k])][k]--;
+            }
+
+            for (int k = 0; k < problem->w; ++k)
+                occurrences[problem->encode(sequence[path[i] + k])][k]++;
+        }
+
+        double mean = total / counter;
+
+        double variance = 0.0;
+        for (pair<pair<int, int>, double> &candidate : candidate_offsets) variance += pow(candidate.second - mean, 2);
+        variance /= counter;
+
+        if (variance == 0.0) {
+            cerr << "How the hell there is a kind of real data that gives all offset combinations a same information content?";
+            exit(1);
+        }
+        else
+            for (pair<pair<int, int>, double> &candidate : candidate_offsets)
+                if ((candidate.second - mean) / sqrt(variance) > quantile) offsets[candidate.first.first].emplace_back(candidate.first.second);
+
+        return offsets;
+    }
+
+    vector<vector<int>> get_offsets_by_adding_offsets_n_plus_1(vector<int> &path) {
+        vector<vector<int>> occurrences(problem->alp_size, vector<int>(problem->w));
+
+        for (int i = 0; i < problem->n; ++i)
+            for (int k = 0; k < problem->w; ++k)
+                occurrences[problem->encode(problem->sequences[i][path[i] + k])][k]++;
+
+        vector<vector<int>> offsets(problem->n, vector<int>());
+
+        double quantile = Function::standard_normal_quantile(1.0 - offset_threshold);
+
+        vector<pair<pair<int, int>, double>> candidate_offsets;
+        double total = 0.0;
+        int counter = 0;
+
+        for (int i = 0; i < problem->n; ++i) {
+            string &sequence = problem->sequences[i];
+
+            int m = sequence.length() - problem->w + 1;
+            counter += m;
+
+            for (int j = 0; j < m; ++j) {
+                for (int k = 0; k < problem->w; ++k)
+                        occurrences[problem->encode(sequence[j + k])][k]++;
+
+                    double score = Function::information_content(problem->n + 1,
+                                                                 problem->alp_size,
+                                                                 problem->w,
+                                                                 occurrences,
+                                                                 problem->background);
+
+                    total += score;
+                    candidate_offsets.emplace_back(make_pair(make_pair(i, j), score));
+
+                    for (int k = 0; k < problem->w; ++k)
+                        occurrences[problem->encode(sequence[j + k])][k]--;
+            }
+        }
+
+        double mean = total / counter;
+
+        double variance = 0.0;
+        for (pair<pair<int, int>, double> &candidate : candidate_offsets)
+            variance += pow(candidate.second - mean, 2);
+        variance /= counter;
+
+        if (variance == 0.0) {
+            cerr << "How the hell there is a kind of real data that gives all offset combinations a same information content?";
+            exit(1);
+        }
+        else
+            for (pair<pair<int, int>, double> &candidate : candidate_offsets)
+                if ((candidate.second - mean) / sqrt(variance) > quantile)
+                    offsets[candidate.first.first].emplace_back(candidate.first.second);
+
+        return offsets;
+    }
+
     void solve() {
         cout << "Running ACOMS:" << endl;
 
         pair<double, vector<int>> result = acoms->find_best_path(n_ants, n_generations);
-        cout << "Information content: " << result.first << endl;
+        cout << "Best information content: " << result.first << endl;
 
-//        vector<vector<int>> offsets = get_offsets(result.second);
+//        vector<vector<int>> offsets = get_offsets_by_distribution_per_sequence(result.second);
+//        vector<vector<int>> offsets = get_offsets_by_global_distribution(result.second);
+//        vector<vector<int>> offsets = get_offsets_by_adding_offsets_n_plus_1(result.second);
 
         vector<vector<int>> offsets;
         for (int &offset : result.second) offsets.emplace_back(vector<int>{offset});

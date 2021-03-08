@@ -5,7 +5,7 @@
 #include "../standard.cpp"
 
 namespace Function {
-    double information_content(const int &n,
+    double information_content(const int &n, // number of motif instances
                                const int &alp_size,
                                const int &w,
                                const vector<vector<int>> &occurrences,
