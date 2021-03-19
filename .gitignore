@@ -5,3 +5,5 @@
 /cmake-build-debug
 /result
 /.idea
+*.zip
+/motif_learning

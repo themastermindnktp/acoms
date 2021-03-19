@@ -40,11 +40,11 @@ struct Acoms : Smmas {
                     for (int k = 0; k < problem.w; ++k)
                         occurrences[problem.encode(sequence[j + k])][k]++;
 
-                    double candidate_score = Function::information_content(problem.n,
-                                                                           problem.alp_size,
-                                                                           problem.w,
-                                                                           occurrences,
-                                                                           problem.background);
+                    double candidate_score = Function::motif_learning_score(problem.n,
+                                                                            problem.alp_size,
+                                                                            problem.w,
+                                                                            occurrences,
+                                                                            problem.background);
 
                     if (candidate_score > score) {
                         improved = true;
@@ -79,11 +79,11 @@ struct Acoms : Smmas {
                 for (int k = 0; k < problem.w; ++k) // position k in the motif is position j+k in the sequence
                     occurrences[problem.encode(sequence[j + k])][k]++;
 
-                double heuristic = Function::information_content(i + 1,
-                                                                 problem.alp_size,
-                                                                 problem.w,
-                                                                 occurrences,
-                                                                 problem.background);
+                double heuristic = Function::motif_learning_score(i + 1,
+                                                                  problem.alp_size,
+                                                                  problem.w,
+                                                                  occurrences,
+                                                                  problem.background);
 
                 double value = pow(pheromones[i][j], alpha) * pow(heuristic, beta);
                 options.emplace_back(value);
@@ -106,11 +106,11 @@ struct Acoms : Smmas {
 
         }
 
-        double score = Function::information_content(problem.n,
-                                                     problem.alp_size,
-                                                     problem.w,
-                                                     occurrences,
-                                                     problem.background);
+        double score = Function::motif_learning_score(problem.n,
+                                                      problem.alp_size,
+                                                      problem.w,
+                                                      occurrences,
+                                                      problem.background);
 
         return make_pair(score, path);
     }

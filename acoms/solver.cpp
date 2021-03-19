@@ -7,7 +7,7 @@
 
 const int DEFAULT_N_ANTS = 20;
 const int DEFAULT_N_GENERATIONS = 100;
-const double DEFAULT_OFFSET_THRESHOLD = 0.01;
+const double DEFAULT_OFFSET_THRESHOLD = 0.05;
 
 
 namespace Solver {
@@ -80,6 +80,11 @@ namespace Solver {
         cout << "Offset Threshold  \t" << offset_threshold << endl;
         cout << endl;
 
+        cout << "Background probabilities:" << endl;
+        for (char character : alphabet)
+            cout << character << ": " << problem->background[problem->encode(character)] << endl;
+        cout << endl;
+
         cout << "Number of ants: " << n_ants << endl;
         cout << "Number of generations: " << n_generations << endl;
         cout << endl;
@@ -131,11 +136,11 @@ namespace Solver {
                 for (int k = 0; k < problem->w; ++k)
                     occurrences[problem->encode(sequence[j + k])][k]++;
 
-                scores[j] = Function::information_content(problem->n,
-                                                          problem->alp_size,
-                                                          problem->w,
-                                                          occurrences,
-                                                          problem->background);
+                scores[j] = Function::motif_learning_score(problem->n,
+                                                           problem->alp_size,
+                                                           problem->w,
+                                                           occurrences,
+                                                           problem->background);
 
                 total += scores[j];
 
@@ -190,11 +195,11 @@ namespace Solver {
                 for (int k = 0; k < problem->w; ++k)
                     occurrences[problem->encode(sequence[j + k])][k]++;
 
-                double score = Function::information_content(problem->n,
-                                                             problem->alp_size,
-                                                             problem->w,
-                                                             occurrences,
-                                                             problem->background);
+                double score = Function::motif_learning_score(problem->n,
+                                                              problem->alp_size,
+                                                              problem->w,
+                                                              occurrences,
+                                                              problem->background);
 
                 total += score;
                 candidate_offsets.emplace_back(make_pair(make_pair(i, j), score));
@@ -249,11 +254,11 @@ namespace Solver {
                 for (int k = 0; k < problem->w; ++k)
                         occurrences[problem->encode(sequence[j + k])][k]++;
 
-                    double score = Function::information_content(problem->n + 1,
-                                                                 problem->alp_size,
-                                                                 problem->w,
-                                                                 occurrences,
-                                                                 problem->background);
+                    double score = Function::motif_learning_score(problem->n + 1,
+                                                                  problem->alp_size,
+                                                                  problem->w,
+                                                                  occurrences,
+                                                                  problem->background);
 
                     total += score;
                     candidate_offsets.emplace_back(make_pair(make_pair(i, j), score));
@@ -283,6 +288,8 @@ namespace Solver {
     }
 
     void solve() {
+        Function::import_motif_learning("coefficients.txt", "regularization.txt");
+
         cout << "Running ACOMS:" << endl;
 
         pair<double, vector<int>> result = acoms->find_best_path(n_ants, n_generations);
@@ -293,7 +300,7 @@ namespace Solver {
 //        vector<vector<int>> offsets = get_offsets_by_adding_offsets_n_plus_1(result.second);
 
         vector<vector<int>> offsets;
-        for (int &offset : result.second) offsets.emplace_back(vector<int>{offset});
+        for (int &offset : result.second) offsets.emplace_back(vector<int> {offset});
 
         print_result(offsets);
         cout << endl;

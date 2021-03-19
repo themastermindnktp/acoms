@@ -28,9 +28,9 @@ struct Problem {
             w(w),
             alphabet(alphabet),
             background(background) {
-        read_dataset_from_file(dataset_filename);
-
         alp_size = alphabet.length();
+
+        read_dataset_from_file(dataset_filename);
 
         if (background.empty()) calculate_background();
     }
@@ -52,11 +52,18 @@ struct Problem {
                 sequences.emplace_back("");
             }
             else {
-                transform(line.begin(), line.end(), line.begin(), ::toupper);
+                refine_sequence(line);
                 sequences.back().append(line);
                 total += line.length();
             }
         }
+    }
+
+    void refine_sequence(string &s) {
+        transform(s.begin(), s.end(), s.begin(), ::toupper);
+        if (s.back() == '\r') s.pop_back();
+        for (char &character : s)
+            encode(character);
     }
 
     int encode(const char &character) {
